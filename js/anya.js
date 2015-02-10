@@ -75,30 +75,43 @@ function render(pattern, palette)
 		   		drawCircle(ctx, bg[i].x, bg[i].y, bg[i].width, palette[bg[i].colorNum%palette.length]);
 	   	}
 	   	
-	   	// render midground
-	   	if (mg != null)
+	   	// render midground & foreground, using z-indexing
+	   	if (mg != null && fg !=null)
 	   	{
-		   	for (i=0; i<mg.length; i++)
-		   	{
-		   		if (mg[i].type == 'rect')
-		   			drawRectangle(ctx, mg[i].x, mg[i].y, mg[i].width, mg[i].height, palette[mg[i].colorNum%palette.length]);
-		   		else if (mg[i].type == 'circ')
-		   			drawCircle(ctx, mg[i].x, mg[i].y, mg[i].width, palette[mg[i].colorNum%palette.length]);
-		   		
-		   	}
-		 }
-		 
-		 // render foreground
-		 if (fg != null)
-		 {
-		 	for (i=0; i<fg.length; i++)
-		 	{
-				if (fg[i].type == 'rect')
-					drawRectangle(ctx, fg[i].x, fg[i].y, fg[i].width, fg[i].height, palette[fg[i].colorNum%palette.length]);
-				else if (fg[i].type == 'circ')
-					drawCircle(ctx, fg[i].x, fg[i].y, fg[i].width, palette[fg[i].colorNum%palette.length]);
-		 	}
-		 }
+	   		var mgElems=0;
+	   		var fgElems=0;
+	   		var z=0;
+	   		while (mgElems<mg.length || fgElems<fg.length)
+	   		{
+	   			// draw all mg elems at current z-index
+	   			for (i=0; i<mg.length; i++)
+	   			{
+	   				if (mg[i].z === z)
+	   				{
+	   					if (mg[i].type == 'rect')
+	   						drawRectangle(ctx, mg[i].x, mg[i].y, mg[i].width, mg[i].height, palette[mg[i].colorNum%palette.length]);
+	   					else if (mg[i].type == 'circ')
+	   						drawCircle(ctx, mg[i].x, mg[i].y, mg[i].width, palette[mg[i].colorNum%palette.length]);
+	   						
+	   					mgElems++;
+	   				}
+	   			}
+	   			// draw all fg elems at current z-index
+	   			for (i=0; i<fg.length; i++)
+	   			{
+	   				if (fg[i].z === z)
+	   				{
+						if (fg[i].type == 'rect')
+							drawRectangle(ctx, fg[i].x, fg[i].y, fg[i].width, fg[i].height, palette[fg[i].colorNum%palette.length]);
+						else if (fg[i].type == 'circ')
+							drawCircle(ctx, fg[i].x, fg[i].y, fg[i].width, palette[fg[i].colorNum%palette.length]);
+	   				
+	   					fgElems++;
+	   				}
+	   			}
+	   			z++;
+	   		}
+	   	}
 	 }	
 	$('#generate').css("background-color", palette[0]);
 	$('#horiz').css("background-color", palette[0]);
@@ -266,10 +279,9 @@ function generatepattern(palette, direction)
 	
 	// generate background elements
 	generatebackground(pattern, palette, direction);
-	render(pattern, palette);
+
 	// add some midtones to background
 	generatemidtones(pattern, palette, direction);
-	render(pattern, palette);
 	
 	// generate midground elements
 	generatemidground(pattern, palette, direction);
@@ -302,6 +314,8 @@ function generatemidground(pattern, palette, direction)
 	// save element to pattern
 	
 	var mg = [];
+	
+	// when drawing groupings, go left/up or right/down from starting circle (values: 1, -1)
 	var drawdir = 1;
 		
 	// add 10-20
@@ -335,7 +349,7 @@ function generatemidground(pattern, palette, direction)
 		{
 			// move along the x, stick to y
 			startx += Math.floor(Math.random()*pattern.bg[stripe].width);
-			if (stripe === 0 || side === 0)
+			if ((stripe === 0 || side === 0) && stripe !== (pattern.bg.length-1))
 				starty += pattern.bg[stripe].height;
 				
 			if ((pattern.bg[stripe].height+15) < size*2)
@@ -368,7 +382,7 @@ function generatemidground(pattern, palette, direction)
 			else 
 				y += size*2*i*drawdir + padding*i*drawdir;
 				
-			mg[elem] = {type:'circ', x:x, y:y, width:size, height:size, colorNum:color};
+			mg[elem] = {type:'circ', x:x, y:y, z:stripe, width:size, height:size, colorNum:color};
 			
 			elemsLeft--;
 		}
@@ -400,8 +414,9 @@ function generateforeground(pattern, palette)
 		// center within background square
 		var x=pattern.midground[elem].x;// + pattern[square].width/2;// - size/2;
 		var y=pattern.midground[elem].y;// + pattern[square].height/2;// - size/2;
+		var z=pattern.midground[elem].z;
 
-		foreground[i] = {type:'circ', x:x, y:y, width:size, height:size, colorNum:color};
+		foreground[i] = {type:'circ', x:x, y:y, z:z, width:size, height:size, colorNum:color};
 		
 	}
 	pattern.foreground = foreground;

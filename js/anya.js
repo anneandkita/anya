@@ -198,20 +198,20 @@ function getMidtone(color1, color2)
 	var g3 = Math.round((g1 + g2)/2);
 	var b3 = Math.round((b1 + b2)/2);
 	
-	var retstr = "#" + ((r3 << 16) + (g3 << 8) + b3).toString(16);	
+	var retstr = "#" + ((1<<24) + (r3 << 16) + (g3 << 8) + b3).toString(16).slice(1);	
 	
 	return retstr;
 }
 
 function generatemidtones(pattern, palette, direction)
 {
-	// pick 2-4 stripes at random
 	var numStripes = pattern.bg.length;
 	var bg = pattern.bg;
-	var numMid = Math.ceil(Math.random()*3 + 1);
+	// pick 4-8 stripes at random
+	var numMid = Math.ceil(Math.random()*4 + 4);
 	
-	if (numMid > numStripes)
-		numMid = numStripes;
+	//if (numMid > numStripes)
+		//numMid = numStripes;
 		
 	// add small midtone bars between it and a neighboring stripe
 	for (var i=0; i<numMid; i++)

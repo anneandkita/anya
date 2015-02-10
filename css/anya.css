@@ -1,0 +1,57 @@
+@charset "UTF-8";
+/* CSS Document */
+
+body,td,th {
+	color: #ccc;
+}
+
+body {
+		background-color: #333;
+}
+
+p {
+	font: 14px/100% Arial, Helvetica, sans-serif;
+}
+
+.palette {
+	float: left;
+	margin: 2px;
+	height: 85vh;
+}
+
+.button {
+	font: bold 13px "Helvetica Neue", Helvetica, Arial, clean, sans-serif !important;
+	text-shadow: 0 0 3px rgba(0,0,0,1);
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-moz-box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+	display: inline-block;
+	color: white;
+	padding: 5px 10px 5px;
+	margin-right: 10px;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	background: #A9014B url(button_overlay.png) repeat-x scroll 0 0;
+	border-style: none;
+	text-align: center;
+	overflow: visible;
+	-moz-user-select: none; 
+	-khtml-user-select: none; 
+	-webkit-user-select: none; 
+	-o-user-select: none;
+}
+ 
+.button:hover,
+.button:focus {
+	background-position: 0 -50px;
+	color: white;
+}
+ 
+.button:active {
+	background-position: 0 -100px;
+	-moz-box-shadow: inset 0 1px 2px rgba(0,0,0,0.7);
+	-webkit-box-shadow: none;
+}

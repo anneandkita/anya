@@ -2,7 +2,7 @@ $(document).ready(startApp);
 
 function startApp() {
 	// get palette to play with
-	var palette = ['#002f81', '#eee001', '#a91900', '#ff4a00', '#006401', '#010101']; //generatecolors();
+	var palette = generatecolors();
 	var startpal = palette.slice();
 	// choose horiz or vert lines 
 	// for now: random

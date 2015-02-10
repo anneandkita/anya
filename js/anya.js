@@ -62,7 +62,7 @@ function render(pattern, palette)
 	   	var ctx = canvas.getContext('2d');
 	   	ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
 	   	
-	   	var bg = pattern.background;
+	   	var bg = pattern.bg;
 	   	var mg = pattern.midground;
 	   	var fg = pattern.foreground;
 	   	
@@ -179,7 +179,7 @@ function generatebackground(pattern, palette, direction)
 				background[i] = {type:'rect', x:curLocation, y:0, width:sizeLeft, height:height, colorNum:color};
 		}
 	}
-	pattern.background = background;
+	pattern.bg = background;
 }
 
 function getMidtone(color1, color2)
@@ -206,8 +206,8 @@ function getMidtone(color1, color2)
 function generatemidtones(pattern, palette, direction)
 {
 	// pick 2-4 stripes at random
-	var numStripes = pattern.background.length;
-	var bg = pattern.background;
+	var numStripes = pattern.bg.length;
+	var bg = pattern.bg;
 	var numMid = Math.ceil(Math.random()*3 + 1);
 	
 	if (numMid > numStripes)
@@ -275,7 +275,7 @@ function generatemidtones(pattern, palette, direction)
 
 function generatepattern(palette, direction)
 {
-	var pattern = {background:null, midground:null, foreground:null};
+	var pattern = {bg:null, midground:null, foreground:null};
 	
 	// generate background elements
 	generatebackground(pattern, palette, direction);
@@ -359,7 +359,7 @@ function generatemidground(pattern, palette, direction)
 		}
 		else {
 			// move along the y, stick to x
-			if (stripe === 0 || side === 0)
+			if ((stripe === 0 || side === 0) && stripe !== (pattern.bg.length-1))
 				startx += pattern.bg[stripe].width;
 			
 			if ((pattern.bg[stripe].width+15) < size*2)
@@ -396,10 +396,10 @@ function generateforeground(pattern, palette)
 	// should be over other squares
 	// find color that is not in use if possible
 	var foreground = [];
-	var color = unusedColor(pattern.background, palette);
+	var color = unusedColor(pattern.bg, palette);
 	// TODO: if all colors used, get colors of stripes behind it (and don't use that color)
 	if (color === -1)
-		color = palette[Math.floor(Math.random(palette.length))];
+		color = Math.floor(Math.random(palette.length));
 	// pick X & Y along border boundary
 	var numElems = Math.floor(Math.random()*3 + 5);
 	var size = Math.floor(Math.random()*5 + 10);

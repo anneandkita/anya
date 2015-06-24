@@ -11,14 +11,14 @@ function startApp() {
 	// make some intermediary colors
 	
 	// generate pattern
-	var pattern = generatepattern(palette, direction);
+	var pattern = generatepattern(palette, direction, "circ");
 	
 	$('#horiz').click(function() {
 		// change to horizontal lines
 		direction = 0;
 		// regenerate
 		palette = startpal.slice();
-		pattern = generatepattern(palette, direction);
+		pattern = generatepattern(palette, direction, "circ");
 		render(pattern, palette);
 	});
 	
@@ -27,7 +27,7 @@ function startApp() {
 		direction = 1;
 		// regenerate
 		palette = startpal.slice();
-		pattern = generatepattern(palette, direction);
+		pattern = generatepattern(palette, direction, "circ");
 		render(pattern, palette);
 	});
 	
@@ -35,7 +35,7 @@ function startApp() {
 		direction = Math.round(Math.random());
 		palette = generatecolors();
 		startpal = palette.slice();
-		pattern = generatepattern(palette, direction);
+		pattern = generatepattern(palette, direction, "circ");
 	 	render(pattern, palette);
 	});
 	$("#newcolors").click(function() {
@@ -46,7 +46,7 @@ function startApp() {
 	$("#newpattern").click(function() {
 		direction = Math.round(Math.random());
 		palette = startpal.slice();
-		pattern = generatepattern(palette, direction);
+		pattern = generatepattern(palette, direction, "circ");
 		render(pattern, palette);
 	});
 	
@@ -92,7 +92,8 @@ function render(pattern, palette)
 	   						drawRectangle(ctx, mg[i].x, mg[i].y, mg[i].width, mg[i].height, palette[mg[i].colorNum%palette.length]);
 	   					else if (mg[i].type == 'circ')
 	   						drawCircle(ctx, mg[i].x, mg[i].y, mg[i].width, palette[mg[i].colorNum%palette.length]);
-	   						
+	   					else if (mg[i].type == 'tri')
+	   						drawTriangle(ctx, mg[i].x, mg[i].y, mg[i].width, mg[i].direction, palette[mg[i].colorNum%palette.length]);	
 	   					mgElems++;
 	   				}
 	   			}
@@ -105,7 +106,8 @@ function render(pattern, palette)
 							drawRectangle(ctx, fg[i].x, fg[i].y, fg[i].width, fg[i].height, palette[fg[i].colorNum%palette.length]);
 						else if (fg[i].type == 'circ')
 							drawCircle(ctx, fg[i].x, fg[i].y, fg[i].width, palette[fg[i].colorNum%palette.length]);
-	   				
+	   					else if (fg[i].type == 'tri')
+	   						drawTriangle(ctx, fg[i].x, fg[i].y, fg[i].width, fg[i].direction, palette[fg[i].colorNum%palette.length]);
 	   					fgElems++;
 	   				}
 	   			}
@@ -273,7 +275,7 @@ function generatemidtones(pattern, palette, direction)
 	pattern.bg = bg;
 }
 
-function generatepattern(palette, direction)
+function generatepattern(palette, direction, shape)
 {
 	var pattern = {bg:null, midground:null, foreground:null};
 	
@@ -284,10 +286,16 @@ function generatepattern(palette, direction)
 	generatemidtones(pattern, palette, direction);
 	
 	// generate midground elements
-	generatemidground(pattern, palette, direction);
+	if (shape == "tri")
+	{
+		generatemidtri(pattern, palette, direction);
+		generateforetri(pattern, palette);
+	}
+	else {
+		generatemidground(pattern, palette, direction);	
+		generateforeground(pattern, palette);
+	}
 	
-	// generate foreground elements
-	generateforeground(pattern, palette);
 	//generateForegroundSquares(pattern, palette, direction, numStripes);
 		
 	/*
@@ -304,6 +312,108 @@ function generatepattern(palette, direction)
 	*/
 	
 	return pattern;
+}
+
+function drawTriangle(ctx, x, y, size, direction, color)
+{
+	ctx.beginPath();
+	ctx.fillStyle=color;
+	ctx.moveTo(x, y);
+	if (direction === 0)
+		ctx.lineTo(x + size/2, y - size);
+	else	
+	{
+		ctx.lineTo(x + size/2, y + size);
+	}
+	ctx.lineTo(x + size, y);
+	ctx.fill();
+}
+
+function generatemidtri(pattern, palette, direction)
+{
+	// generate large elements that blend into the striped background
+	// pick X & Y along a border boundary
+	// get color of stripe behind it
+	// choose direction of triangle
+	// add triangles
+	// save element to pattern
+	
+	var mg = [];
+	
+	// when drawing groupings, go left/up or right/down from starting circle (values: 1, -1)
+	var drawdir = 1;
+	var tridir = 1;
+		
+	// add 10-20
+	var numElems = Math.floor(Math.random()*10+10);
+	var elemsLeft = numElems;
+	var stripesUsed = [];
+	// make group of 3-5 elements)
+	while (elemsLeft > 0)
+	{
+		var groupSize = Math.round(Math.random()*2+3);
+		if (groupSize > elemsLeft)
+			groupSize = elemsLeft;
+	
+		var size = Math.floor(Math.random()*100 + 15);
+		// pick a stripe
+		var stripe = Math.floor(Math.random()*pattern.bg.length);
+		
+		// try not to put everything on the same stripe
+		while (stripesUsed.length < pattern.bg.length && stripesUsed.indexOf(stripe) > -1)
+		{
+			stripe = Math.floor(Math.random()*pattern.bg.length);
+		}
+		stripesUsed.push(stripe);
+		
+		var color=pattern.bg[stripe].colorNum;
+		var startx=pattern.bg[stripe].x;
+		var starty=pattern.bg[stripe].y;
+		var side = Math.round(Math.random());
+		
+		if (direction === 0) // horizontal
+		{
+			// move along the x, stick to y
+			startx += Math.floor(Math.random()*pattern.bg[stripe].width);
+			if ((stripe === 0 || side === 0) && stripe !== (pattern.bg.length-1))
+				starty += pattern.bg[stripe].height;
+				
+			if ((pattern.bg[stripe].height+15) < size*2)
+				starty = pattern.bg[stripe].y + pattern.bg[stripe].height/2;	
+			if (startx > pattern.bg[stripe].width/2)
+				drawdir = -1;	
+		}
+		else {
+			// move along the y, stick to x
+			if ((stripe === 0 || side === 0) && stripe !== (pattern.bg.length-1))
+				startx += pattern.bg[stripe].width;
+			
+			if ((pattern.bg[stripe].width+15) < size*2)
+				startx = pattern.bg[stripe].x + pattern.bg[stripe].width/2;	
+				
+			starty += Math.floor(Math.random()*pattern.bg[stripe].height);
+			if (starty > pattern.bg[stripe].height/2)
+				drawdir = -1;
+		}
+		
+		var padding = Math.floor(Math.random()*10);
+		tridir = Math.round(Math.random());
+		for (var i=0; i<groupSize; i++)
+		{
+			var x = startx;
+			var y = starty;
+			var elem = mg.length;
+			if (direction === 0)
+				x += size*2*i*drawdir + padding*i*drawdir;
+			else 
+				y += size*2*i*drawdir + padding*i*drawdir;
+				
+			mg[elem] = {type:'circ', x:x, y:y, z:stripe, width:size, height:size, direction:tridir, colorNum:color};
+			
+			elemsLeft--;
+		}
+	}	
+	pattern.midground = mg;
 }
 
 function generatemidground(pattern, palette, direction)
@@ -390,6 +500,39 @@ function generatemidground(pattern, palette, direction)
 	pattern.midground = mg;
 }
 
+function generateforetri(pattern, palette)
+{
+	// generate smaller elements that pop out into the foreground
+	// should be over other squares
+	// find color that is not in use if possible
+	var foreground = [];
+	var color = unusedColor(pattern.bg, palette);
+	// TODO: if all colors used, get colors of stripes behind it (and don't use that color)
+	if (color === -1)
+		color = Math.floor(Math.random(palette.length));
+	// pick X & Y along border boundary
+	var numElems = Math.floor(Math.random()*5 + 5);
+	var size = Math.floor(Math.random()*50 + 10);
+	
+	// draw square
+	for (var i=0; i<numElems; i++)
+	{
+		// pick a midground element
+		var nummgElems = pattern.midground.length;
+		var elem = Math.floor(Math.random()*(nummgElems));
+		
+		// center within background square
+		var x=pattern.midground[elem].x + pattern.midground[elem].width/2 - size/2;// + pattern[square].width/2;// - size/2;
+		var y=pattern.midground[elem].y;// + pattern[square].height/2;// - size/2;
+		var z=pattern.midground[elem].z;
+
+		foreground[i] = {type:'circ', x:x, y:y, z:z, width:size, height:size, direction:pattern.midground[elem].direction, colorNum:color};
+		
+	}
+	pattern.foreground = foreground;
+	
+}
+
 function generateforeground(pattern, palette)
 {
 	// generate smaller elements that pop out into the foreground
@@ -412,11 +555,11 @@ function generateforeground(pattern, palette)
 		var elem = Math.floor(Math.random()*(nummgElems));
 		
 		// center within background square
-		var x=pattern.midground[elem].x;// + pattern[square].width/2;// - size/2;
+		var x=pattern.midground[elem].x; // + pattern.midground[elem].width/2 - size/2;// + pattern[square].width/2;// - size/2;
 		var y=pattern.midground[elem].y;// + pattern[square].height/2;// - size/2;
 		var z=pattern.midground[elem].z;
 
-		foreground[i] = {type:'circ', x:x, y:y, z:z, width:size, height:size, colorNum:color};
+		foreground[i] = {type:'circ', x:x, y:y, z:z, width:size, height:size, direction:pattern.midground[elem].direction, colorNum:color};
 		
 	}
 	pattern.foreground = foreground;
